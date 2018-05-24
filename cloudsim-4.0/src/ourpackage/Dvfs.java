@@ -36,9 +36,9 @@ public class Dvfs {
 		String inputFolder = Dvfs.class.getClassLoader().getResource("workload/planetlab").getPath();
 		String outputFolder = "output";
 		String workload = "20110303"; // PlanetLab workload
-		String vmAllocationPolicy = "mad"; // DVFS policy without VM migrations
+		String vmAllocationPolicy = "iqr"; // DVFS policy without VM migrations
 		String vmSelectionPolicy = "mc";
-		String vmSelectionPolicyName="mmt";
+	
 		String parameter = "";
 
 		new PlanetLabRunner(

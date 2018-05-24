@@ -67,24 +67,14 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 	 */
 	@Override
 	public boolean allocateHostForVm(Vm vm) {
+//		return allocateHostForVmModified(vm);		
+		
 		int requiredPes = vm.getNumberOfPes();
 		boolean result = false;
 		int tries = 0;
-//		System.out.println("inside allocateHostForVm() method");
-//		try {
-//			DatacenterBroker db=new DatacenterBroker("new broker");
-//			List<Cloudlet> cloudletList=new ArrayList<Cloudlet>();
-//			cloudletList=(List<Cloudlet>) db.cloudletList;
-//			
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-
-		
 		
 		List<Integer> freePesTmp = new ArrayList<Integer>();
-		for (Integer freePes : getFreePes()) {
+		for (Integer freePes : getFreePes()) {		//getFreePes() returns all the free PEs of all hosts
 			freePesTmp.add(freePes);
 		}
 
@@ -97,7 +87,7 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 				for (int i = 0; i < freePesTmp.size(); i++) {
 					if (freePesTmp.get(i) > moreFree) {
 						moreFree = freePesTmp.get(i);
-						idx = i;
+						idx = i;								//stores the id of the host with more PEs available
 					}
 				}
 
@@ -121,6 +111,86 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 		return result;
 	}
 
+	//my function...implement roundrobin
+	
+	//check number of VMs on each host and allocate new VM on the host with least no of VMs
+	public boolean allocateHostForVmModified(Vm vm) {
+		List<Host> hostlist=getHostList();
+		boolean result=false;
+		int tries=0;
+		int requiredPes = vm.getNumberOfPes();
+		
+		if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
+			do {// we still trying until we find a host or until we try all of them
+				int lowest=Integer.MAX_VALUE;	
+				int presentVms=Integer.MIN_VALUE;			//number of VMs present on host
+				int index=-1;
+				
+				for(Host hosts:hostlist) {			//if the hosts have equal VMs then they will be selected in sequential order
+						presentVms= hosts.getVmList().size();
+						if(lowest>presentVms) {
+							lowest=presentVms;
+							index=hosts.getId();
+						}
+					}
+					
+					Host host = getHostList().get(index);
+					result = host.vmCreate(vm);
+					
+					if (result) { // if vm were succesfully created in the host
+						getVmTable().put(vm.getUid(), host);
+						getUsedPes().put(vm.getUid(), requiredPes);
+						getFreePes().set(index, getFreePes().get(index) - requiredPes);
+						result = true;
+						break;
+					} else {
+						hostlist.remove(index);
+					}
+					tries++;
+				} while (!result && tries < getFreePes().size());
+		}
+		return result;
+		
+//		int requiredPes = vm.getNumberOfPes();
+//		boolean result = false;
+//		int tries = 0;
+//		
+//		List<Integer> freePesTmp = new ArrayList<Integer>();
+//		for (Integer freePes : getFreePes()) {
+//			freePesTmp.add(freePes);
+//		}
+//
+//		if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
+//			do {// we still trying until we find a host or until we try all of them
+//				int moreFree = Integer.MIN_VALUE;
+//				int idx = -1;
+//
+//				// we want the host with less pes in use
+//				for (int i = 0; i < freePesTmp.size(); i++) {
+//					if (freePesTmp.get(i) > moreFree) {
+//						moreFree = freePesTmp.get(i);
+//						idx = i;
+//					}
+//				}
+//
+//				Host host = getHostList().get(idx);
+//				result = host.vmCreate(vm);
+//			
+//				if (result) { // if vm were succesfully created in the host
+//					getVmTable().put(vm.getUid(), host);
+//					getUsedPes().put(vm.getUid(), requiredPes);
+//					getFreePes().set(idx, getFreePes().get(idx) - requiredPes);
+//					result = true;
+//					break;
+//				} else {
+//					freePesTmp.set(idx, Integer.MIN_VALUE);
+//				}
+//				tries++;
+//			} while (!result && tries < getFreePes().size());
+//		}
+//		return result;
+	}
+	
 	@Override
 	public void deallocateHostForVm(Vm vm) {
 		Host host = getVmTable().remove(vm.getUid());
