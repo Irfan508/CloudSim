@@ -32,6 +32,7 @@ import org.cloudbus.cloudsim.UtilizationModel;
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.VmAllocationPolicySimple;
+import org.cloudbus.cloudsim.VmSchedulerSpaceShared;
 import org.cloudbus.cloudsim.VmSchedulerTimeShared;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
@@ -183,7 +184,7 @@ public class MyExample {
 
 		//4. Create Hosts with its id and list of PEs and add them to the list of machines
 		int hostId=0;
-		int ram = 1000; //host memory (MB) 16384
+		int ram = 16384; //host memory (MB) 16384
 		long storage = 1000000; //host storage
 		int bw = 10000;
 
@@ -211,18 +212,18 @@ public class MyExample {
     			)
     		); // Second machine
 		
-		hostId++;
-
-		hostList.add(
-    			new Host(
-    				hostId,
-    				new RamProvisionerSimple(ram),
-    				new BwProvisionerSimple(bw),
-    				storage,
-    				peList2,
-    				new VmSchedulerTimeShared(peList2)
-    			)
-    		); // Third machine
+//		hostId++;
+//
+//		hostList.add(
+//    			new Host(
+//    				hostId,
+//    				new RamProvisionerSimple(ram),
+//    				new BwProvisionerSimple(bw),
+//    				storage,
+//    				peList2,
+//    				new VmSchedulerTimeShared(peList2)
+//    			)
+//    		); // Third machine
 
 		// 5. Create a DatacenterCharacteristics object that stores the
 		//    properties of a data center: architecture, OS, list of
