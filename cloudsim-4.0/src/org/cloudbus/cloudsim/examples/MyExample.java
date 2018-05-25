@@ -184,7 +184,7 @@ public class MyExample {
 
 		//4. Create Hosts with its id and list of PEs and add them to the list of machines
 		int hostId=0;
-		int ram = 16384; //host memory (MB) 16384
+		int ram = 5000; //host memory (MB) 16384
 		long storage = 1000000; //host storage
 		int bw = 10000;
 

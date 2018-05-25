@@ -68,7 +68,7 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 	 */
 	@Override
 	public boolean allocateHostForVm(Vm vm) {
-		return allocateHostForVmRR(vm);		
+		return allocateHostForVmRankBased(vm);		
 		
 //		int requiredPes = vm.getNumberOfPes();
 //		boolean result = false;
@@ -113,7 +113,6 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 	}
 
 	//my function...implement roundrobin
-	
 	//check number of VMs on each host and allocate new VM on the host with least no of VMs
 	public boolean allocateHostForVmRR(Vm vm) {
 		List<Host> myHostlist=getHostList();
@@ -139,11 +138,9 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 						}
 					}					
 					
-				
 					Host host = getHostList().get(index);		
 					result = host.vmCreate(vm);
-					
-					
+							
 					if (result) { // if vm were succesfully created in the host
 						getVmTable().put(vm.getUid(), host);
 						getUsedPes().put(vm.getUid(), requiredPes);
@@ -159,45 +156,76 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 				} while (!result && tries < getFreePes().size());
 		}
 		return result;
+	}
+	
+	//my function...implement greedy algorithm
+	//First capable machine found is selected
+	public boolean allocateHostForVmGreedy(Vm vm) {		
+		int requiredPes = vm.getNumberOfPes();
+		boolean result = false;
+		int index;
 		
-//		int requiredPes = vm.getNumberOfPes();
-//		boolean result = false;
-//		int tries = 0;
-//		
-//		List<Integer> freePesTmp = new ArrayList<Integer>();
-//		for (Integer freePes : getFreePes()) {
-//			freePesTmp.add(freePes);
-//		}
-//
-//		if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
-//			do {// we still trying until we find a host or until we try all of them
-//				int moreFree = Integer.MIN_VALUE;
-//				int idx = -1;
-//
-//				// we want the host with less pes in use
-//				for (int i = 0; i < freePesTmp.size(); i++) {
-//					if (freePesTmp.get(i) > moreFree) {
-//						moreFree = freePesTmp.get(i);
-//						idx = i;
-//					}
-//				}
-//
-//				Host host = getHostList().get(idx);
-//				result = host.vmCreate(vm);
-//			
-//				if (result) { // if vm were succesfully created in the host
-//					getVmTable().put(vm.getUid(), host);
-//					getUsedPes().put(vm.getUid(), requiredPes);
-//					getFreePes().set(idx, getFreePes().get(idx) - requiredPes);
-//					result = true;
-//					break;
-//				} else {
-//					freePesTmp.set(idx, Integer.MIN_VALUE);
-//				}
-//				tries++;
-//			} while (!result && tries < getFreePes().size());
-//		}
-//		return result;
+		if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
+			for(Host hosts:getHostList()) {
+				result=hosts.vmCreate(vm);
+				if(result) {
+					index=getHostList().indexOf(hosts);
+					getVmTable().put(vm.getUid(), hosts);
+					getUsedPes().put(vm.getUid(), requiredPes);
+					getFreePes().set(index, getFreePes().get(index) - requiredPes);
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+	
+	//my function...implement Rank Based approach
+	//New VM is assigned on a host for more available mips
+	public boolean allocateHostForVmRankBased(Vm vm) {
+		List<Host> myHostlist=getHostList();		
+		boolean result=false;
+		int tries=0;
+		int requiredPes = vm.getNumberOfPes();
+		int arr[]=new int[myHostlist.size()];
+		Arrays.fill(arr, 0);
+		System.out.println("\nFor VM #"+vm.getId()+" Total mips: "+vm.getCurrentRequestedTotalMips());
+		for(Host hosts:getHostList())
+			System.out.println("Host #"+hosts.getId()+" mips:"+hosts.getAvailableMips());
+		if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
+			do {// we still trying until we find a host or until we try all of them
+				double lowest=Integer.MIN_VALUE;	
+				double presentmips=Integer.MIN_VALUE;			//number of mips present on host
+				int index=-1;
+				
+				for(Host hosts:myHostlist) {			//if the hosts have equal VMs then they will be selected in sequential order
+						presentmips= hosts.getAvailableMips();
+						if(lowest<presentmips&&arr[myHostlist.indexOf(hosts)]==0) {
+							lowest=presentmips;
+//							index=hosts.getId();		//stores the id of the host and not the index
+							index=myHostlist.indexOf(hosts);
+						}
+					}					
+					
+					Host host = getHostList().get(index);		
+					result = host.vmCreate(vm);
+							
+					if (result) { // if vm were succesfully created in the host
+						getVmTable().put(vm.getUid(), host);
+						getUsedPes().put(vm.getUid(), requiredPes);
+						getFreePes().set(index, getFreePes().get(index) - requiredPes);
+						result = true;
+						break;
+					} else {
+//						myHostlist.remove(host);
+						arr[index]=1;			//host with arr[index]=1 will not be considered for scheduling
+						
+					}
+					tries++;
+				} while (!result && tries < getFreePes().size());
+		}
+		return result;
 	}
 	
 	@Override
