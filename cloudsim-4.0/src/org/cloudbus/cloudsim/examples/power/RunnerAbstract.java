@@ -169,7 +169,7 @@ public abstract class RunnerAbstract {
 			broker.submitVmList(vmList);
 			broker.submitCloudletList(cloudletList);
 
-			CloudSim.terminateSimulation(Constants.SIMULATION_LIMIT);
+			CloudSim.terminateSimulation(Constants.SIMULATION_LIMIT);			//simulation_limit is the run duration of the program. 24*60=1440
 			double lastClock = CloudSim.startSimulation();
 
 			List<Cloudlet> newList = broker.getCloudletReceivedList();

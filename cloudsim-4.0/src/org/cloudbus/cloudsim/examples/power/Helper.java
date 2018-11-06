@@ -64,16 +64,16 @@ public class Helper {
 	public static List<Vm> createVmList(int brokerId, int vmsNumber) {
 		List<Vm> vms = new ArrayList<Vm>();
 		for (int i = 0; i < vmsNumber; i++) {
-			int vmType = i / (int) Math.ceil((double) vmsNumber / Constants.VM_TYPES);
+			int vmType = i / (int) Math.ceil((double) vmsNumber / Constants.VM_TYPES);			//VM_TYPES=4
 			//System.out.println("vmType:"+vmType);
 			vms.add(new PowerVm(
 					i,
 					brokerId,
-					Constants.VM_MIPS[vmType],
-					Constants.VM_PES[vmType],
-					Constants.VM_RAM[vmType],
-					Constants.VM_BW,
-					Constants.VM_SIZE,
+					Constants.VM_MIPS[vmType],			//{ 2500, 2000, 1000, 500 }	
+					Constants.VM_PES[vmType],			//{ 1, 1, 1, 1 }
+					Constants.VM_RAM[vmType],			//{ 870,  1740, 1740, 613 }
+					Constants.VM_BW,					//100000
+					Constants.VM_SIZE,					//2500
 					1,
 					"Xen",
 					new CloudletSchedulerDynamicWorkload(Constants.VM_MIPS[vmType], Constants.VM_PES[vmType]),
@@ -96,7 +96,7 @@ public class Helper {
 
 			List<Pe> peList = new ArrayList<Pe>();
 			for (int j = 0; j < Constants.HOST_PES[hostType]; j++) {
-				peList.add(new Pe(j, new PeProvisionerSimple(Constants.HOST_MIPS[hostType])));
+				peList.add(new Pe(j, new PeProvisionerSimple(Constants.HOST_MIPS[hostType])));		//mips={ 1860, 2660 }
 			}
 
 			hostList.add(new PowerHostUtilizationHistory(

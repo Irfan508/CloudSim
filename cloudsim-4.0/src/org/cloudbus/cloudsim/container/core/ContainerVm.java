@@ -36,6 +36,12 @@ public class ContainerVm {
      * The uid.
      */
     private String uid;
+    public int Davailableram,Dusedram;
+    public double Davailablemips,DusedMips;        
+    public double fault=0;
+    public double start=0;
+    public int datacid;
+    public List<ContainerDatacenter> datacenterlist = new ArrayList<ContainerDatacenter>();
 
     /**
      * The size.
@@ -45,7 +51,7 @@ public class ContainerVm {
     /**
      * The MIPS.
      */
-    private double mips;
+    public double mips;
 
     /**
      * The number of PEs.
@@ -79,7 +85,7 @@ public class ContainerVm {
     /**
      * The host.
      */
-    private ContainerHost host;
+    public ContainerHost host;
 
     /**
      * In migration flag.
@@ -124,7 +130,7 @@ public class ContainerVm {
     /**
      * The id.
      */
-    private int id;
+    public int id;
 
     /**
      * The storage.
@@ -168,7 +174,7 @@ public class ContainerVm {
     @SuppressWarnings("unused")
 	private ContainerDatacenter datacenter;
 
-
+    public double allomips;
     /**
      * Creates a new VMCharacteristics object.
      * @param id
@@ -183,7 +189,6 @@ public class ContainerVm {
      * @param containerBwProvisioner
      * @param peList
      */
-
     public ContainerVm(
             int id,
             int userId,
@@ -191,12 +196,15 @@ public class ContainerVm {
             float ram,
             long bw,
             long size,
+            
             String vmm,
             ContainerScheduler containerScheduler,
             ContainerRamProvisioner containerRamProvisioner,
             ContainerBwProvisioner containerBwProvisioner,
             List<? extends ContainerPe> peList
-    ) {
+    )
+    
+    {
         setId(id);
         setUserId(userId);
         setUid(getUid(userId, id));
@@ -220,7 +228,50 @@ public class ContainerVm {
 
         setContainerRamProvisioner(containerRamProvisioner);
         setContainerBwProvisioner(containerBwProvisioner);
+     
 
+    }
+
+    public ContainerVm(
+            int id,
+            int userId,
+            double mips,
+            float ram,
+            long bw,
+            long size,
+            double fault,
+            String vmm,
+            ContainerScheduler containerScheduler,
+            ContainerRamProvisioner containerRamProvisioner,
+            ContainerBwProvisioner containerBwProvisioner,
+            List<? extends ContainerPe> peList
+    )
+    
+    {
+        setId(id);
+        setUserId(userId);
+        setUid(getUid(userId, id));
+        setMips(mips);
+        setPeList(peList);
+        setNumberOfPes(getPeList().size());
+        setRam(ram);
+        setBw(bw);
+        setSize(size);
+        setVmm(vmm);
+        setContainerScheduler(containerScheduler);
+
+        setInMigration(false);
+        setInWaiting(false);
+        setBeingInstantiated(true);
+
+        setCurrentAllocatedBw(0);
+        setCurrentAllocatedMips(null);
+        setCurrentAllocatedRam(0);
+        setCurrentAllocatedSize(0);
+
+        setContainerRamProvisioner(containerRamProvisioner);
+        setContainerBwProvisioner(containerBwProvisioner);
+        setfault(fault);
 
     }
 
@@ -701,6 +752,9 @@ public class ContainerVm {
     public void setBeingInstantiated(boolean beingInstantiated) {
         this.beingInstantiated = beingInstantiated;
     }
+    protected void setfault(double fault) {
+		this.fault = fault;
+	}
 
     /**
      * Gets the state history.

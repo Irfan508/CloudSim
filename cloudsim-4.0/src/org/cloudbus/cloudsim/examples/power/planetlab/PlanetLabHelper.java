@@ -48,11 +48,11 @@ public class PlanetLabHelper {
 
 		for (int i = 0; i < files.length; i++) {
 			Cloudlet cloudlet = null;
-			try {
+			try {			//cloudlet_length=24*60*60*2500			cloudlet_pes=1			scheduling_interval=400
 				cloudlet = new Cloudlet(
 						i,
 						Constants.CLOUDLET_LENGTH,
-						Constants.CLOUDLET_PES,
+						Constants.CLOUDLET_PES,					
 						fileSize,
 						outputSize,
 						new UtilizationModelPlanetLabInMemory(

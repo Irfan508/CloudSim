@@ -87,7 +87,7 @@ public class CloudSimExample2 {
 	            	int vmid = 0;
 	            	int mips = 250;
 	            	long size = 10000; //image size (MB)
-	            	int ram = 512; //vm memory (MB)
+	            	int ram = 2000; //vm memory (MB)
 	            	long bw = 1000;
 	            	int pesNumber = 1; //number of cpus
 	            	String vmm = "Xen"; //VMM name

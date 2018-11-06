@@ -16,6 +16,7 @@ public class ContainerPlacementPolicyFirstFit extends ContainerPlacementPolicy {
     @Override
     public ContainerVm getContainerVm(List<ContainerVm> vmList, Object obj, Set<? extends ContainerVm> excludedVmList) {
         ContainerVm containerVm = null;
+        System.out.println("Container placement policy: FirstFit");
         for (ContainerVm containerVm1 : vmList) {
             if (excludedVmList.contains(containerVm1)) {
                 continue;

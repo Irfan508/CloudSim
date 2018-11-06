@@ -63,9 +63,9 @@ public class PlanetLabRunner extends RunnerAbstract {
 	@Override
 	protected void init(String inputFolder) {
 		try {
-			CloudSim.init(1, Calendar.getInstance(), false);
+			CloudSim.init(1, Calendar.getInstance(), false);			//creates shutdown entity and CIS
 
-			broker = Helper.createBroker();
+			broker = Helper.createBroker();					//creates broker and initializes various other parameters
 			int brokerId = broker.getId();
 
 			cloudletList = PlanetLabHelper.createCloudletListPlanetLab(brokerId, inputFolder);

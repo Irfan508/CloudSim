@@ -33,6 +33,8 @@ import org.cloudbus.cloudsim.container.hostSelectionPolicies.HostSelectionPolicy
 import org.cloudbus.cloudsim.container.resourceAllocatorMigrationEnabled.PowerContainerVmAllocationPolicyMigrationAbstractHostSelection;
 import org.cloudbus.cloudsim.container.resourceAllocators.ContainerAllocationPolicy;
 import org.cloudbus.cloudsim.container.resourceAllocators.ContainerVmAllocationPolicy;
+import org.cloudbus.cloudsim.container.resourceAllocators.ContainerVmAllocationPolicyGreedy;
+import org.cloudbus.cloudsim.container.resourceAllocators.ContainerVmAllocationPolicyRR;
 import org.cloudbus.cloudsim.container.resourceAllocators.PowerContainerAllocationPolicySimple;
 import org.cloudbus.cloudsim.container.schedulers.ContainerCloudletSchedulerDynamicWorkload;
 import org.cloudbus.cloudsim.container.schedulers.ContainerSchedulerTimeSharedOverSubscription;
@@ -154,14 +156,16 @@ public class ContainerCloudSimExample1 {
             /**
              * 7- The container allocation policy  which defines the allocation of VMs to containers.
              */
-            ContainerVmAllocationPolicy vmAllocationPolicy = new
-                    PowerContainerVmAllocationPolicyMigrationAbstractHostSelection(hostList, vmSelectionPolicy,
-                    hostSelectionPolicy, overUtilizationThreshold, underUtilizationThreshold);
+//            ContainerVmAllocationPolicy vmAllocationPolicy = new
+//                    PowerContainerVmAllocationPolicyMigrationAbstractHostSelection(hostList, vmSelectionPolicy,
+//                    hostSelectionPolicy, overUtilizationThreshold, underUtilizationThreshold);
+            
+            ContainerVmAllocationPolicy vmAllocationPolicy=new ContainerVmAllocationPolicyGreedy(hostList);
             /**
              * 8- The overbooking factor for allocating containers to VMs. This factor is used by the broker for the
              * allocation process.
              */
-            int overBookingFactor = 80;
+            int overBookingFactor = 60;
             ContainerDatacenterBroker broker = createBroker(overBookingFactor);
             int brokerId = broker.getId();
             /**
@@ -334,13 +338,13 @@ public class ContainerCloudSimExample1 {
         for (int i = 0; i < hostsNumber; ++i) {
             int hostType = i / (int) Math.ceil((double) hostsNumber / 3.0D);
             ArrayList<ContainerVmPe> peList = new ArrayList<ContainerVmPe>();
-            for (int j = 0; j < ConstantsExamples.HOST_PES[hostType]; ++j) {
+            for (int j = 0; j < ConstantsExamples.HOST_PES[hostType]; ++j) {		//HOST_PES={4, 8, 16}
                 peList.add(new ContainerVmPe(j,
-                        new ContainerVmPeProvisionerSimple((double) ConstantsExamples.HOST_MIPS[hostType])));
+                        new ContainerVmPeProvisionerSimple((double) ConstantsExamples.HOST_MIPS[hostType])));		//HOST_MIPS=37272
             }
 
             hostList.add(new PowerContainerHostUtilizationHistory(IDs.pollId(ContainerHost.class),
-                    new ContainerVmRamProvisionerSimple(ConstantsExamples.HOST_RAM[hostType]),
+                    new ContainerVmRamProvisionerSimple(ConstantsExamples.HOST_RAM[hostType]),		//HOST_RAM={65536, 131072, 262144}
                     new ContainerVmBwProvisionerSimple(1000000L), 1000000L, peList,
                     new ContainerVmSchedulerTimeSharedOverSubscription(peList),
                     ConstantsExamples.HOST_POWER[hostType]));
@@ -438,7 +442,7 @@ public class ContainerCloudSimExample1 {
 
                     try {
                         cloudlet = new ContainerCloudlet(IDs.pollId(ContainerCloudlet.class), ConstantsExamples.CLOUDLET_LENGTH, 1,
-                                fileSize, outputSize,
+                                fileSize, outputSize,												
                                 new UtilizationModelPlanetLabInMemoryExtended(files[i].getAbsolutePath(), 300.0D),
                                 utilizationModelNull, utilizationModelNull);
                     } catch (Exception var13) {

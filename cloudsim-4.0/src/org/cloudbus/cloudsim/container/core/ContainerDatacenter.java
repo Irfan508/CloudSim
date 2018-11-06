@@ -52,7 +52,7 @@ public class ContainerDatacenter extends SimEntity {
     /**
      * The vm list.
      */
-    private List<? extends ContainerVm> containerVmList;
+    public List< ContainerVm> containerVmList;
     /**
      * The container list.
      */
@@ -1265,12 +1265,6 @@ public class ContainerDatacenter extends SimEntity {
         this.storageList = storageList;
     }
 
-    /**
-     * Gets the vm list.
-     *
-     * @return the vm list
-     */
-    @SuppressWarnings("unchecked")
     public <T extends ContainerVm> List<T> getContainerVmList() {
         return (List<T>) containerVmList;
     }
@@ -1278,12 +1272,36 @@ public class ContainerDatacenter extends SimEntity {
     /**
      * Sets the vm list.
      *
-     * @param containerVmList the new vm list
+     * @param vmList the new vm list
      */
-    protected <T extends ContainerVm> void setContainerVmList(List<T> containerVmList) {
+    protected <T extends ContainerVm> void setContainerVmList(List<ContainerVm> containerVmList) {
         this.containerVmList = containerVmList;
     }
-
+    
+    /**
+     * Gets the vm list.
+     *
+     * @return the vm list
+     */
+    @SuppressWarnings("unchecked")
+/*    public <T extends ContainerVm> List<T> getContainerVmList() {
+        return (List<T>) containerVmList;
+    }
+ */   
+    /**
+     * Sets the vm list.
+     *
+     * @param containerVmList the new vm list
+     */
+/*    protected <ContainerVm> void setContainerVmList(List<T> containerVmList) {
+        this.containerVmList = containerVmList;
+    }
+*/
+/*    protected <T extends ContainerVm> void setContainerVmList(List<T> containerVmList) {
+        this.containerVmList = containerVmList;
+    }
+    */
+    
     /**
      * Gets the scheduling interval.
      *

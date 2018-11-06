@@ -15,6 +15,7 @@ public class ContainerPlacementPolicyRandomSelection extends ContainerPlacementP
     @Override
     public ContainerVm getContainerVm(List<ContainerVm> vmList, Object obj, Set<? extends ContainerVm> excludedVmList) {
         ContainerVm containerVm = null;
+        System.out.println("Container placement policy: RandommSelection");
         while (true) {
             if (vmList.size() > 0) {
                 int randomNum = new RandomGen().getNum(vmList.size());

@@ -134,6 +134,8 @@ public class CloudSimExample6 {
 
 			broker.submitVmList(vmlist);
 			broker.submitCloudletList(cloudletList);
+			
+			
 
 			// Fifth step: Starts the simulation
 			CloudSim.startSimulation();

@@ -578,6 +578,7 @@ public class ContainerDatacenterBroker extends SimEntity {
     protected void submitContainers(){
         List<Container> successfullySubmitted = new ArrayList<>();
         int i = 0;
+        System.out.println("###Inside submitContainers() in ContainerDataCenterBroker class");
         for(Container container:getContainerList()) {
             ContainerCloudlet cloudlet = getCloudletList().get(i);
                 //Log.printLine("Containers Created" + getContainersCreated());

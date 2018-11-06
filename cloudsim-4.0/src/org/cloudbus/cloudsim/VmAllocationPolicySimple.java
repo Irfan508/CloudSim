@@ -68,48 +68,48 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 	 */
 	@Override
 	public boolean allocateHostForVm(Vm vm) {
-		return allocateHostForVmRankBased(vm);		
+//		return allocateHostForVmGreedy(vm);		
 		
-//		int requiredPes = vm.getNumberOfPes();
-//		boolean result = false;
-//		int tries = 0;
-//		
-//		List<Integer> freePesTmp = new ArrayList<Integer>();
-//		for (Integer freePes : getFreePes()) {		//getFreePes() returns all the free PEs of all hosts
-//			freePesTmp.add(freePes);
-//		}
-//
-//		if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
-//			do {// we still trying until we find a host or until we try all of them
-//				int moreFree = Integer.MIN_VALUE;
-//				int idx = -1;
-//
-//				// we want the host with less pes in use
-//				for (int i = 0; i < freePesTmp.size(); i++) {
-//					if (freePesTmp.get(i) > moreFree) {
-//						moreFree = freePesTmp.get(i);
-//						idx = i;								//stores the id of the host with more PEs available
-//					}
-//				}
-//
-//				Host host = getHostList().get(idx);
-//				result = host.vmCreate(vm);
-//
-//				if (result) { // if vm were succesfully created in the host
-//					getVmTable().put(vm.getUid(), host);
-//					getUsedPes().put(vm.getUid(), requiredPes);
-//					getFreePes().set(idx, getFreePes().get(idx) - requiredPes);
-//					result = true;
-//					break;
-//				} else {
-//					freePesTmp.set(idx, Integer.MIN_VALUE);
-//				}
-//				tries++;
-//			} while (!result && tries < getFreePes().size());
-//
-//		}
-//
-//		return result;
+		int requiredPes = vm.getNumberOfPes();
+		boolean result = false;
+		int tries = 0;
+		
+		List<Integer> freePesTmp = new ArrayList<Integer>();
+		for (Integer freePes : getFreePes()) {		//getFreePes() returns all the free PEs of all hosts
+			freePesTmp.add(freePes);
+		}
+
+		if (!getVmTable().containsKey(vm.getUid())) { // if this vm was not created
+			do {// we still trying until we find a host or until we try all of them
+				int moreFree = Integer.MIN_VALUE;
+				int idx = -1;
+
+				// we want the host with less pes in use
+				for (int i = 0; i < freePesTmp.size(); i++) {
+					if (freePesTmp.get(i) > moreFree) {
+						moreFree = freePesTmp.get(i);
+						idx = i;								//stores the id of the host with more PEs available
+					}
+				}
+
+				Host host = getHostList().get(idx);
+				result = host.vmCreate(vm);
+
+				if (result) { // if vm were succesfully created in the host
+					getVmTable().put(vm.getUid(), host);
+					getUsedPes().put(vm.getUid(), requiredPes);
+					getFreePes().set(idx, getFreePes().get(idx) - requiredPes);
+					result = true;
+					break;
+				} else {
+					freePesTmp.set(idx, Integer.MIN_VALUE);
+				}
+				tries++;
+			} while (!result && tries < getFreePes().size());
+
+		}
+
+		return result;
 	}
 
 	//my function...implement roundrobin
@@ -189,7 +189,7 @@ public class VmAllocationPolicySimple extends VmAllocationPolicy {
 		int tries=0;
 		int requiredPes = vm.getNumberOfPes();
 		int arr[]=new int[myHostlist.size()];
-		Arrays.fill(arr, 0);
+		Arrays.fill(arr, 0);		//initializes the array ellements with 0
 		System.out.println("\nFor VM #"+vm.getId()+" Total mips: "+vm.getCurrentRequestedTotalMips());
 		for(Host hosts:getHostList())
 			System.out.println("Host #"+hosts.getId()+" mips:"+hosts.getAvailableMips());

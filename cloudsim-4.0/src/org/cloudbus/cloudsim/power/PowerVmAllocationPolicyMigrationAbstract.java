@@ -241,13 +241,17 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 	public PowerHost findHostForVm(Vm vm, Set<? extends Host> excludedHosts) {
 		double minPower = Double.MAX_VALUE;
 		PowerHost allocatedHost = null;
-
+		
+//		//my code , added for testing - irfan
+//		allocatedHost= findHostForVmRankBased(vm, excludedHosts);			//call made to my function
+//		allocatedHost=null;
+		
 		for (PowerHost host : this.<PowerHost> getHostList()) {
 			if (excludedHosts.contains(host)) {
 				continue;
 			}
 			if (host.isSuitableForVm(vm)) {
-				if (getUtilizationOfCpuMips(host) != 0 && isHostOverUtilizedAfterAllocation(host, vm)) {
+				if (getUtilizationOfCpuMips(host) != 0 && isHostOverUtilizedAfterAllocation(host, vm)) {	//if host is already in use and becomes over-utilized if allocated
 					continue;
 				}
 
@@ -264,6 +268,71 @@ public abstract class PowerVmAllocationPolicyMigrationAbstract extends PowerVmAl
 				}
 			}
 		}
+		return allocatedHost;
+	}
+	
+	//Here i have used greedy algorithm which assigns VM to the first capable host found
+	public PowerHost findHostForVmGreedy(Vm vm, Set<? extends Host> excludedHosts) {
+		PowerHost allocatedHost = null;
+		for(PowerHost host:this.<PowerHost> getHostList()) {
+			if(excludedHosts.contains(host))
+				continue;
+			if(host.isSuitableForVm(vm)) {
+				System.out.println("Utilization of host #"+host.getId()+" : "+getUtilizationOfCpuMips(host)+" **********************");
+				if(getUtilizationOfCpuMips(host)!=0 && isHostOverUtilizedAfterAllocation(host, vm)) {	//if host_util>0 && isover_util after allocation
+					continue;
+				}
+				allocatedHost=host;
+				break;
+			}			
+		}
+		if(allocatedHost!=null)
+			System.out.println("Modified function return value id for host: "+allocatedHost.getId()+"*********************************");
+		return allocatedHost;	
+	}
+	
+	//Here i have used round robin algorithm which assigns VM to the least loaded host
+	public PowerHost findHostForVmRR(Vm vm, Set<? extends Host> excludedHosts) {
+		PowerHost allocatedHost=null;
+		int lowest=Integer.MAX_VALUE;
+		int presentVms=Integer.MIN_VALUE;
+
+		for(PowerHost host:this.<PowerHost> getHostList()) {
+			presentVms=host.getVmList().size();
+			if(lowest>presentVms&&host.isSuitableForVm(vm)) {
+				lowest=presentVms;
+				
+				if(getUtilizationOfCpuMips(host)!=0 && isHostOverUtilizedAfterAllocation(host, vm))
+					continue;
+				allocatedHost=host;
+			}
+		}
+		if(allocatedHost!=null)
+			System.out.println("***************Allocated host for VM: "+vm.getId()+" is # "+allocatedHost.getId()+"******************");
+		return allocatedHost;
+		
+	}
+	
+	
+	//Here i have used rank based algorithm and priority is given based on the least power consumed by host machine
+	public PowerHost findHostForVmRankBased(Vm vm, Set<? extends Host> excludedHosts) {
+		PowerHost allocatedHost=null;
+		int lowest=Integer.MAX_VALUE;
+		double remMips=Integer.MIN_VALUE;
+
+		for(PowerHost host:this.<PowerHost> getHostList()) {
+			remMips=host.getVmScheduler().getAvailableMips();		//currently available mips with host
+			if(lowest>remMips&&host.isSuitableForVm(vm)) {
+				//lowest-=vm.getMips();		remaining mips after Vm allocation
+				
+				if(getUtilizationOfCpuMips(host)!=0 && isHostOverUtilizedAfterAllocation(host, vm))
+					continue;
+				lowest=(int) remMips;
+				allocatedHost=host;
+			}
+		}
+		if(allocatedHost!=null)
+			System.out.println("************Allocated host for VM: "+vm.getId()+" is #"+allocatedHost.getId()+" with remaining mips: "+lowest+"**************");
 		return allocatedHost;
 	}
 

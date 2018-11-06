@@ -91,7 +91,7 @@ public class MyExample {
 		Cloudlet[] cloudlet = new Cloudlet[cloudlets];
 
 		for(int i=0;i<cloudlets;i++){
-			cloudlet[i] = new Cloudlet(idShift + i, length+(arr[i%10]*1000), pesNumber, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
+			cloudlet[i] = new Cloudlet(idShift + i, length+(arr[i%10]*5000), pesNumber, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
 			// setting the owner of these Cloudlets
 			cloudlet[i].setUserId(userId);
 			list.add(cloudlet[i]);
@@ -130,8 +130,8 @@ public class MyExample {
 			int brokerId = broker.getId();
 
 			//Fourth step: Create VMs and Cloudlets and send them to broker
-			vmlist = createVM(brokerId, 8, 0); //creating 5 vms
-			cloudletList = createCloudlet(brokerId, 10, 0); // creating 10 cloudlets
+			vmlist = createVM(brokerId, 20, 0); //creating 5 vms
+			cloudletList = createCloudlet(brokerId, 20, 0); // creating 10 cloudlets
  
 			broker.submitVmList(vmlist);
 			broker.submitCloudletList(cloudletList);
@@ -275,7 +275,7 @@ public class MyExample {
 	private static void printCloudletList(List<Cloudlet> list) {
 		int size = list.size();
 		Cloudlet cloudlet;
-
+		double avgTime=0;
 		String indent = "    ";
 		Log.printLine();
 		Log.printLine("========== OUTPUT ==========");
@@ -293,8 +293,10 @@ public class MyExample {
 				Log.printLine( indent + indent + cloudlet.getResourceId() + indent + indent + indent + cloudlet.getVmId() +
 						indent + indent + indent + dft.format(cloudlet.getActualCPUTime()) +
 						indent + indent + dft.format(cloudlet.getExecStartTime())+ indent + indent + indent + dft.format(cloudlet.getFinishTime()));
+						avgTime+=(cloudlet.getFinishTime()-cloudlet.getExecStartTime());
 			}
 		}
+		Log.printLine("Average execution time is: "+avgTime/size);
 
 	}
 }

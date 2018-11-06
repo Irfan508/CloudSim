@@ -14,6 +14,6 @@ package ourpackage;
  */
 public class PlanetLabConstants {
 
-	public final static int NUMBER_OF_HOSTS = 50;
+	public final static int NUMBER_OF_HOSTS = 10;	//50
 
 }

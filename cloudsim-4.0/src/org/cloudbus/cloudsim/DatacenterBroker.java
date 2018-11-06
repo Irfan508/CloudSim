@@ -23,6 +23,8 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.lists.CloudletList;
 import org.cloudbus.cloudsim.lists.VmList;
 
+import com.sun.corba.se.pept.broker.Broker;
+
 /**
  * DatacentreBroker represents a broker acting on behalf of a user. It hides VM management, as vm
  * creation, submission of cloudlets to VMs and destruction of VMs.
@@ -349,45 +351,208 @@ public class DatacenterBroker extends SimEntity {
 	 * @post $none
          * @see #submitCloudletList(java.util.List) 
 	 */
-	protected void submitCloudlets() {
+	protected void submitCloudlets() {		//cloudlets are mapped to the VMs in RR fashion
 //		submitCloudletsModified();
-		int vmIndex = 0;
-		List<Cloudlet> successfullySubmitted = new ArrayList<Cloudlet>();
-		for (Cloudlet cloudlet : getCloudletList()) {
-			Vm vm;
-			// if user didn't bind this cloudlet and it has not been executed yet
-			if (cloudlet.getVmId() == -1) {
-				vm = getVmsCreatedList().get(vmIndex);
-			} else { // submit to the specific vm
-				vm = VmList.getById(getVmsCreatedList(), cloudlet.getVmId());
-				if (vm == null) { // vm was not created
-					if(!Log.isDisabled()) {				    
-					    Log.printConcatLine(CloudSim.clock(), ": ", getName(), ": Postponing execution of cloudlet ",
-							cloudlet.getCloudletId(), ": bount VM not available");
+//		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
+//		if(vmsCreatedList.size()==cloudletList.size()) {
+//			System.out.println("***************No of cloudlets and vm are same.. SO running hungarian algorithm in submitCloudlets()");
+//			submitCloudletsHungarianAlgo();		//it will bind the cloudlets with VMs using bindCloudlettoVm()
+//		}
+			int vmIndex = 0;
+			List<Cloudlet> successfullySubmitted = new ArrayList<Cloudlet>();
+			for (Cloudlet cloudlet : getCloudletList()) {
+				Vm vm;
+				// if user didn't bind this cloudlet and it has not been executed yet
+				if (cloudlet.getVmId() == -1) {
+					vm = getVmsCreatedList().get(vmIndex);
+				} else { // submit to the specific vm
+					vm = VmList.getById(getVmsCreatedList(), cloudlet.getVmId());
+					if (vm == null) { // vm was not created
+						if(!Log.isDisabled()) {				    
+						    Log.printConcatLine(CloudSim.clock(), ": ", getName(), ": Postponing execution of cloudlet ",
+								cloudlet.getCloudletId(), ": bound VM not available");
+						}
+						continue;
 					}
-					continue;
 				}
+
+				if (!Log.isDisabled()) {
+				    Log.printConcatLine(CloudSim.clock(), ": ", getName(), ": Sending cloudlet ",
+						cloudlet.getCloudletId(), " to VM #", vm.getId());
+				}
+				
+				cloudlet.setVmId(vm.getId());
+				sendNow(getVmsToDatacentersMap().get(vm.getId()), CloudSimTags.CLOUDLET_SUBMIT, cloudlet);
+				cloudletsSubmitted++;
+				vmIndex = (vmIndex + 1) % getVmsCreatedList().size();
+				getCloudletSubmittedList().add(cloudlet);
+				successfullySubmitted.add(cloudlet);
 			}
 
-			if (!Log.isDisabled()) {
-			    Log.printConcatLine(CloudSim.clock(), ": ", getName(), ": Sending cloudlet ",
-					cloudlet.getCloudletId(), " to VM #", vm.getId());
-			}
-			
-			cloudlet.setVmId(vm.getId());
-			sendNow(getVmsToDatacentersMap().get(vm.getId()), CloudSimTags.CLOUDLET_SUBMIT, cloudlet);
-			cloudletsSubmitted++;
-			vmIndex = (vmIndex + 1) % getVmsCreatedList().size();
-			getCloudletSubmittedList().add(cloudlet);
-			successfullySubmitted.add(cloudlet);
-		}
-
-		// remove submitted cloudlets from waiting list
-		getCloudletList().removeAll(successfullySubmitted);
+			// remove submitted cloudlets from waiting list
+			getCloudletList().removeAll(successfullySubmitted);			
 	}
-
 	
-	protected void submitCloudletsModified() {		//i have created this function
+	//Display the contents of the cost Matrix
+	protected void displayCostMatrix(double costMatrix[][])
+	{
+		System.out.println("Contents of the CostMatrix are");
+		for(int i=0;i<cloudletList.size();i++)
+		{
+			for(int j=0;j<vmsCreatedList.size();j++)
+			{
+				System.out.print(costMatrix[i][j]+"\t");
+			}
+			System.out.println();
+		}
+	}
+	
+	
+	protected void submitCloudletsMinMin() {	
+		int row,col,i,j;
+		int index, value;
+		int result[]=new int[cloudletList.size()];
+		
+		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
+		row=cloudletList.size();
+		col=vmsCreatedList.size();
+		
+		//sort the cloudlets on the basis of their total length
+		Collections.sort(cloudletList, new Comparator<Cloudlet>() {
+			@Override
+			public int compare(Cloudlet o1, Cloudlet o2) {
+				// TODO Auto-generated method stub
+				return (int)(o1.getCloudletTotalLength()-o2.getCloudletTotalLength());
+			}
+		});
+		
+		double[][] costMatrix=new double[cloudletList.size()][vmsCreatedList.size()];
+		for(i=0;i<cloudletList.size();i++)			//row is for cloudlets
+			for(j=0;j<vmsCreatedList.size();j++)	//column is for VMs
+				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
+		
+		System.out.println("Cost matrix before implementation of the lago is:");
+		displayCostMatrix(costMatrix);
+		
+		for(i=0;i<row;i++) {
+			value=(int) costMatrix[i][0];			//store first value
+			index=0;
+			for(j=0;j<col;j++) {
+				if(value>costMatrix[i][j]) {
+					value=(int) costMatrix[i][j];
+					index=j;
+				}	
+			}	//this loops finds the smallest value in each row and its corresponding index	
+			result[i]=index;
+			costMatrix[i][index]=99999;
+			for(int k=0;k<row;k++) {
+				if(k==i)
+					continue;
+				costMatrix[k][index]+=value;
+			}
+			displayCostMatrix(costMatrix);
+		}
+		
+		System.out.println("Final resultant matrix is: ");
+		for(i=0;i<vmList.size();i++) {
+			bindCloudletToVm(cloudletList.get(i).getCloudletId(), result[i]);
+			System.out.print("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
+			System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+		}
+	}
+	
+	
+	protected void submitCloudletsMaxMin() {	
+		int row,col,i,j;
+		int index, value;
+		int result[]=new int[cloudletList.size()];
+		
+		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
+		row=cloudletList.size();
+		col=vmsCreatedList.size();
+		
+		//sort the cloudlets on the basis of their total length
+		Collections.sort(cloudletList, new Comparator<Cloudlet>() {
+			@Override
+			public int compare(Cloudlet o1, Cloudlet o2) {
+				// TODO Auto-generated method stub
+				return (int)(o2.getCloudletTotalLength()-o1.getCloudletTotalLength());
+			}
+		});
+		
+		double[][] costMatrix=new double[cloudletList.size()][vmsCreatedList.size()];
+		for(i=0;i<cloudletList.size();i++)			//row is for cloudlets
+			for(j=0;j<vmsCreatedList.size();j++)	//column is for VMs
+				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
+		
+		System.out.println("Cost matrix before implementation of the lago is:");
+		displayCostMatrix(costMatrix);
+		
+		for(i=0;i<row;i++) {
+			value=(int) costMatrix[i][0];			//store first value
+			index=0;
+			for(j=0;j<col;j++) {
+				if(value>costMatrix[i][j]) {
+					value=(int) costMatrix[i][j];
+					index=j;
+				}	
+			}	//this loops finds the smallest value in each row and its corresponding index	
+			result[i]=index;
+			costMatrix[i][index]=99999;
+			for(int k=0;k<row;k++) {
+				if(k==i)
+					continue;
+				costMatrix[k][index]+=value;
+			}
+			displayCostMatrix(costMatrix);
+		}
+		
+		System.out.println("Final resultant matrix is: ");
+		for(i=0;i<vmList.size();i++) {
+			bindCloudletToVm(cloudletList.get(i).getCloudletId(), result[i]);
+			System.out.print("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
+			System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+		}
+	}
+	
+	protected void submitCloudletsHungarianAlgo() {		//use vmsCreatedList.size()	instead of vmList.size()
+		int i,j;
+		double cost=0;
+		/** Cost matrix for hungarian algo*/
+		double[][] costMatrix=new double[cloudletList.size()][cloudletList.size()];
+		System.out.println("***********************Cost matrix is:");
+		for(i=0;i<cloudletList.size();i++) {				//row is for cloudlet
+			for(j=0;j<vmList.size();j++) {		//column is for VM
+				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
+				System.out.print("cloudlet id: "+i+" cloudlet length: "+getCloudletList().get(i).getCloudletLength()+" VM id: "+j+" VM mips: "+vmList.get(j).getMips());
+				System.out.println("  costMatrix: "+costMatrix[i][j]);
+			}
+			System.out.println();
+		}
+		//display costMatrix values
+		System.out.println("Final matrix is: ");
+		for(i=0;i<cloudletList.size();i++) {
+			for(j=0;j<vmList.size();j++) {
+				System.out.print(costMatrix[i][j]+"\t");			
+			}
+			System.out.println();
+		}
+		HungarianAlgorithm algo=new HungarianAlgorithm(costMatrix);
+		int result[]=algo.execute();		//returns VM no for each cloudlet
+		System.out.println("Resultant matrix is: ");
+		for(i=0;i<vmList.size();i++) {
+			bindCloudletToVm(cloudletList.get(i).getCloudletId(), result[i]);
+			System.out.print("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
+			System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+			cost=cost+costMatrix[i][result[i]];
+		}
+		System.out.println("\nTotal cost is: "+cost);
+		
+	}
+	
+
+	//rank based function where the cloudlets and VMs are sorted first and then mapped sequentially
+	protected void submitCloudletsModified() {		//I have created this function
 		int vmIndex = 0;
 		List<Cloudlet> successfullySubmitted = new ArrayList<Cloudlet>();
 		

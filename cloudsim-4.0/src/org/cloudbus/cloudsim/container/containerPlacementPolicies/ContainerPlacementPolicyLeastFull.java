@@ -15,6 +15,7 @@ public class ContainerPlacementPolicyLeastFull extends ContainerPlacementPolicy{
     public ContainerVm getContainerVm(List<ContainerVm> vmList, Object obj, Set<? extends ContainerVm> excludedVmList) {
         ContainerVm selectedVm = null;
         double minMips = Double.MAX_VALUE;
+        System.out.println("Container placement policy: LeastFull");
         for (ContainerVm containerVm1 : vmList) {
             if (excludedVmList.contains(containerVm1)) {
                 continue;

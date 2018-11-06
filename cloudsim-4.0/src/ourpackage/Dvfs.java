@@ -37,7 +37,7 @@ public class Dvfs {
 		String outputFolder = "output";
 		String workload = "20110303"; // PlanetLab workload
 		String vmAllocationPolicy = "iqr"; // DVFS policy without VM migrations
-		String vmSelectionPolicy = "mc";
+		String vmSelectionPolicy = "mu";
 	
 		String parameter = "";
 
