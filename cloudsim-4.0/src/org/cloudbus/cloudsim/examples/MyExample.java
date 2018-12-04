@@ -80,7 +80,8 @@ public class MyExample {
 	private static List<Cloudlet> createCloudlet(int userId, int cloudlets, int idShift){
 		// Creates a container to store Cloudlets
 		LinkedList<Cloudlet> list = new LinkedList<Cloudlet>();
-	int arr[]= {1,3,6,8,0,2,7,9,4,5};
+//	int arr[]= {1,3,6,8,0,2,7,9,4,5};
+	int arr[]= {21,8,0,25,4,18,10,14};
 		//cloudlet parameters
 		long length = 40000;
 		long fileSize = 300;
@@ -91,7 +92,7 @@ public class MyExample {
 		Cloudlet[] cloudlet = new Cloudlet[cloudlets];
 
 		for(int i=0;i<cloudlets;i++){
-			cloudlet[i] = new Cloudlet(idShift + i, length+(arr[i%10]*5000), pesNumber, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
+			cloudlet[i] = new Cloudlet(idShift + i, length+(arr[i%8]*5000), pesNumber, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
 			// setting the owner of these Cloudlets
 			cloudlet[i].setUserId(userId);
 			list.add(cloudlet[i]);
@@ -130,8 +131,8 @@ public class MyExample {
 			int brokerId = broker.getId();
 
 			//Fourth step: Create VMs and Cloudlets and send them to broker
-			vmlist = createVM(brokerId, 20, 0); //creating 5 vms
-			cloudletList = createCloudlet(brokerId, 20, 0); // creating 10 cloudlets
+			vmlist = createVM(brokerId, 10, 0); //creating 5 vms
+			cloudletList = createCloudlet(brokerId, 5000, 0); // creating 10 cloudlets
  
 			broker.submitVmList(vmlist);
 			broker.submitCloudletList(cloudletList);
@@ -274,8 +275,10 @@ public class MyExample {
 	 */
 	private static void printCloudletList(List<Cloudlet> list) {
 		int size = list.size();
+		double finishtime=0;
 		Cloudlet cloudlet;
 		double avgTime=0;
+		double stdDev=0;		//standard deviation
 		String indent = "    ";
 		Log.printLine();
 		Log.printLine("========== OUTPUT ==========");
@@ -294,9 +297,23 @@ public class MyExample {
 						indent + indent + indent + dft.format(cloudlet.getActualCPUTime()) +
 						indent + indent + dft.format(cloudlet.getExecStartTime())+ indent + indent + indent + dft.format(cloudlet.getFinishTime()));
 						avgTime+=(cloudlet.getFinishTime()-cloudlet.getExecStartTime());
+						finishtime=cloudlet.getFinishTime();
 			}
 		}
-		Log.printLine("Average execution time is: "+avgTime/size);
+		avgTime/=size;
+		Log.printLine("Average execution time is: "+avgTime);
+		
+		//for standard deviation
+		for(int i=0;i<size;i++) {
+			cloudlet=list.get(i);
+			stdDev+=Math.pow(avgTime-(cloudlet.getFinishTime()-cloudlet.getExecStartTime()), 2);			
+		}
+		stdDev/=size;
+		stdDev=Math.sqrt(stdDev);
+		
+		Log.printLine("Output: "+finishtime/size+" seconds/cloudlet");
+		Log.printLine("Throughput: "+1/(finishtime/size)+" seconds/cloudlet");
+		Log.printLine("Standard deviation is: "+stdDev);
 
 	}
 }

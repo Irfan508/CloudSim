@@ -352,7 +352,7 @@ public class DatacenterBroker extends SimEntity {
          * @see #submitCloudletList(java.util.List) 
 	 */
 	protected void submitCloudlets() {		//cloudlets are mapped to the VMs in RR fashion
-//		submitCloudletsModified();
+		submitCloudletsModified();
 //		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
 //		if(vmsCreatedList.size()==cloudletList.size()) {
 //			System.out.println("***************No of cloudlets and vm are same.. SO running hungarian algorithm in submitCloudlets()");
@@ -396,7 +396,7 @@ public class DatacenterBroker extends SimEntity {
 	//Display the contents of the cost Matrix
 	protected void displayCostMatrix(double costMatrix[][])
 	{
-		System.out.println("Contents of the CostMatrix are");
+		System.out.println("\nContents of the CostMatrix are");
 		for(int i=0;i<cloudletList.size();i++)
 		{
 			for(int j=0;j<vmsCreatedList.size();j++)
@@ -417,6 +417,11 @@ public class DatacenterBroker extends SimEntity {
 		row=cloudletList.size();
 		col=vmsCreatedList.size();
 		
+//		//cloudletList.sort(c);
+//		System.out.print("Cloudlets before sorting:\t");
+//		for(i=0;i<cloudletList.size();i++)
+//			System.out.print(cloudletList.get(i).getCloudletId()+"\t");
+		
 		//sort the cloudlets on the basis of their total length
 		Collections.sort(cloudletList, new Comparator<Cloudlet>() {
 			@Override
@@ -425,13 +430,21 @@ public class DatacenterBroker extends SimEntity {
 				return (int)(o1.getCloudletTotalLength()-o2.getCloudletTotalLength());
 			}
 		});
-		
+
+		System.out.print("\nCloudlets after sorting:\t");
+		for(i=0;i<cloudletList.size();i++)
+			System.out.print(cloudletList.get(i).getCloudletId()+"\t");
+		System.out.println();
+
 		double[][] costMatrix=new double[cloudletList.size()][vmsCreatedList.size()];
-		for(i=0;i<cloudletList.size();i++)			//row is for cloudlets
-			for(j=0;j<vmsCreatedList.size();j++)	//column is for VMs
+		double[][] costMatrixTemp=new double[cloudletList.size()][vmsCreatedList.size()];
+		for(i=0;i<cloudletList.size();i++) {		//row is for cloudlets
+			for(j=0;j<vmsCreatedList.size();j++) {	//column is for VMs
 				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
-		
-		System.out.println("Cost matrix before implementation of the lago is:");
+				costMatrixTemp[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
+			}
+		}	
+		System.out.println("Cost matrix before implementation of the algo is:");
 		displayCostMatrix(costMatrix);
 		
 		for(i=0;i<row;i++) {
@@ -444,25 +457,27 @@ public class DatacenterBroker extends SimEntity {
 				}	
 			}	//this loops finds the smallest value in each row and its corresponding index	
 			result[i]=index;
-			costMatrix[i][index]=99999;
+			value=(int)costMatrixTemp[i][index];
+//			costMatrix[i][index]=9999;
 			for(int k=0;k<row;k++) {
 				if(k==i)
 					continue;
 				costMatrix[k][index]+=value;
 			}
-			displayCostMatrix(costMatrix);
+//			System.out.println("value of i: "+i);
+//			displayCostMatrix(costMatrix);
 		}
 		
 		System.out.println("Final resultant matrix is: ");
-		for(i=0;i<vmList.size();i++) {
+		for(i=0;i<cloudletList.size();i++) {
 			bindCloudletToVm(cloudletList.get(i).getCloudletId(), result[i]);
-			System.out.print("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
-			System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+			System.out.println("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
+			//System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
 		}
 	}
 	
 	
-	protected void submitCloudletsMaxMin() {	
+	protected void submitCloudletsMaxMin() {		//remaining part of the main function (submitcloudlets) should be executed
 		int row,col,i,j;
 		int index, value;
 		int result[]=new int[cloudletList.size()];
@@ -481,11 +496,15 @@ public class DatacenterBroker extends SimEntity {
 		});
 		
 		double[][] costMatrix=new double[cloudletList.size()][vmsCreatedList.size()];
-		for(i=0;i<cloudletList.size();i++)			//row is for cloudlets
-			for(j=0;j<vmsCreatedList.size();j++)	//column is for VMs
+		double[][] costMatrixTemp=new double[cloudletList.size()][vmsCreatedList.size()];
+		for(i=0;i<cloudletList.size();i++) {		//row is for cloudlets
+			for(j=0;j<vmsCreatedList.size();j++) {	//column is for VMs
 				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
+				costMatrixTemp[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
+			}
+		}	
 		
-		System.out.println("Cost matrix before implementation of the lago is:");
+		System.out.println("Cost matrix before implementation of the algo is:");
 		displayCostMatrix(costMatrix);
 		
 		for(i=0;i<row;i++) {
@@ -498,20 +517,20 @@ public class DatacenterBroker extends SimEntity {
 				}	
 			}	//this loops finds the smallest value in each row and its corresponding index	
 			result[i]=index;
-			costMatrix[i][index]=99999;
+			value=(int)costMatrixTemp[i][index];
+//			costMatrix[i][index]=9999;
 			for(int k=0;k<row;k++) {
 				if(k==i)
 					continue;
 				costMatrix[k][index]+=value;
 			}
-			displayCostMatrix(costMatrix);
+//			displayCostMatrix(costMatrix);
 		}
 		
 		System.out.println("Final resultant matrix is: ");
-		for(i=0;i<vmList.size();i++) {
+		for(i=0;i<cloudletList.size();i++) {
 			bindCloudletToVm(cloudletList.get(i).getCloudletId(), result[i]);
-			System.out.print("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
-			System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+			System.out.println("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
 		}
 	}
 	
@@ -551,6 +570,69 @@ public class DatacenterBroker extends SimEntity {
 	}
 	
 
+	//rank based function where the cloudlets are sorted first and then mapped sequentially
+	//larger cloudlets assume higher priority
+	protected void submitCloudletsPriority() {		//I have created this function
+		int vmIndex = 0;
+		List<Cloudlet> successfullySubmitted = new ArrayList<Cloudlet>();
+		
+		//sort the cloudlets on the basis of their total length
+		Collections.sort(cloudletList, new Comparator<Cloudlet>() {
+			@Override
+			public int compare(Cloudlet o1, Cloudlet o2) {
+				// TODO Auto-generated method stub
+				return (int)(o1.getCloudletTotalLength()-o2.getCloudletTotalLength());
+			}
+		});
+		
+//		//sort the VMs on the basis of their total mips
+//		Collections.sort(vmList,new Comparator<Vm>() {
+//			@Override
+//			public int compare(Vm o1, Vm o2) {
+//				// TODO Auto-generated method stub
+//				return (int) (o1.getCurrentRequestedTotalMips()-o2.getCurrentRequestedTotalMips());
+//			}
+//		});
+		
+//		for(Vm vm: getVmList()) {
+//			System.out.println("VM id:"+vm.getId()+" mips: "+vm.getMips());
+//		}
+		
+		for (Cloudlet cloudlet : getCloudletList()) {
+			Vm vm;
+			// if user didn't bind this cloudlet and it has not been executed yet
+			if (cloudlet.getVmId() == -1) {
+//				vm = getVmsCreatedList().get(vmIndex);
+				vm = getVmList().get(vmIndex);
+			} else { // submit to the specific vm
+				vm = VmList.getById(getVmsCreatedList(), cloudlet.getVmId());
+				if (vm == null) { // vm was not created
+					if(!Log.isDisabled()) {				    
+					    Log.printConcatLine(CloudSim.clock(), ": ", getName(), ": Postponing execution of cloudlet ",
+							cloudlet.getCloudletId(), ": bount VM not available");
+					}
+					continue;
+				}
+			}
+
+			if (!Log.isDisabled()) {
+			    Log.printConcatLine(CloudSim.clock(), ": ", getName(), ": Sending cloudlet ",
+					cloudlet.getCloudletId(), " to VM #", vm.getId());
+			}
+			
+			cloudlet.setVmId(vm.getId());
+			sendNow(getVmsToDatacentersMap().get(vm.getId()), CloudSimTags.CLOUDLET_SUBMIT, cloudlet);
+			cloudletsSubmitted++;
+			vmIndex = (vmIndex + 1) % getVmsCreatedList().size();
+			getCloudletSubmittedList().add(cloudlet);
+			successfullySubmitted.add(cloudlet);
+		}
+
+		// remove submitted cloudlets from waiting list
+		getCloudletList().removeAll(successfullySubmitted);
+	}
+	
+	
 	//rank based function where the cloudlets and VMs are sorted first and then mapped sequentially
 	protected void submitCloudletsModified() {		//I have created this function
 		int vmIndex = 0;
