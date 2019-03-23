@@ -8,6 +8,7 @@
 
 package org.cloudbus.cloudsim;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -78,6 +79,13 @@ public class DatacenterBroker extends SimEntity {
 	/** The datacenter characteristics map where each key
          * is a datacenter id and each value is its characteristics.. */
 	protected Map<Integer, DatacenterCharacteristics> datacenterCharacteristicsList;
+	
+	protected double Q;
+	protected double alpha;
+	protected double beta;
+	protected double gamma;
+	protected double rho;
+	protected int m;
 
 	/**
 	 * Created a new DatacenterBroker object.
@@ -105,6 +113,33 @@ public class DatacenterBroker extends SimEntity {
 		setDatacenterRequestedIdsList(new ArrayList<Integer>());
 		setVmsToDatacentersMap(new HashMap<Integer, Integer>());
 		setDatacenterCharacteristicsList(new HashMap<Integer, DatacenterCharacteristics>());
+	}
+	
+	public DatacenterBroker(String name, int m, double Q, double alpha, double beta, double gamma, double rho) throws Exception {
+		super(name);
+
+		setVmList(new ArrayList<Vm>());
+		setVmsCreatedList(new ArrayList<Vm>());
+		setCloudletList(new ArrayList<Cloudlet>());
+		setCloudletSubmittedList(new ArrayList<Cloudlet>());
+		setCloudletReceivedList(new ArrayList<Cloudlet>());
+
+		cloudletsSubmitted = 0;
+		setVmsRequested(0);
+		setVmsAcks(0);
+		setVmsDestroyed(0);
+
+		setDatacenterIdsList(new LinkedList<Integer>());
+		setDatacenterRequestedIdsList(new ArrayList<Integer>());
+		setVmsToDatacentersMap(new HashMap<Integer, Integer>());
+		setDatacenterCharacteristicsList(new HashMap<Integer, DatacenterCharacteristics>());
+
+		this.m = m;
+		this.Q = Q;
+		this.alpha = alpha;
+		this.beta = beta;
+		this.gamma = gamma;
+		this.rho = rho;
 	}
 
 	/**
@@ -352,12 +387,12 @@ public class DatacenterBroker extends SimEntity {
          * @see #submitCloudletList(java.util.List) 
 	 */
 	protected void submitCloudlets() {		//cloudlets are mapped to the VMs in RR fashion
-		submitCloudletsModified();
-//		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
-//		if(vmsCreatedList.size()==cloudletList.size()) {
-//			System.out.println("***************No of cloudlets and vm are same.. SO running hungarian algorithm in submitCloudlets()");
-//			submitCloudletsHungarianAlgo();		//it will bind the cloudlets with VMs using bindCloudlettoVm()
-//		}
+//		submitCloudletsACO();
+		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
+		if(vmsCreatedList.size()==cloudletList.size()) {
+			System.out.println("***************No of cloudlets and vm are same.. SO running hungarian algorithm in submitCloudlets()");
+			submitCloudletsHungarianAlgo();		//it will bind the cloudlets with VMs using bindCloudlettoVm()
+		}
 			int vmIndex = 0;
 			List<Cloudlet> successfullySubmitted = new ArrayList<Cloudlet>();
 			for (Cloudlet cloudlet : getCloudletList()) {
@@ -391,6 +426,53 @@ public class DatacenterBroker extends SimEntity {
 
 			// remove submitted cloudlets from waiting list
 			getCloudletList().removeAll(successfullySubmitted);			
+	}
+	
+	//ACO funtion from github
+	protected void submitCloudletsACO() {
+		// int vmIndex = 0;
+		List<Cloudlet> clList = getCloudletList();
+		List<Vm> vm_list = getVmsCreatedList();
+		// Random r = new Random();
+		// int m = (vm_list.size()/4 + r.nextInt(vm_list.size()/2+1))%vm_list.size();
+
+		LBACO lbaco1 = new LBACO(m,Q,alpha,beta,gamma,rho);
+		Map<Integer, Integer> allocated=null;
+		try {
+			allocated = lbaco1.implement(clList,vm_list,100);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		for (int i=0;i<clList.size();i++) {
+			Cloudlet cloudlet = clList.get(i);
+			Vm vm = vm_list.get(allocated.get(i));
+			// if user didn't bind this cloudlet and it has not been executed yet
+			// if (cloudlet.getVmId() == -1) {
+			// 	vm = getVmsCreatedList().get(vmIndex);
+			// } else { // submit to the specific vm
+			// 	vm = VmList.getById(getVmsCreatedList(), cloudlet.getVmId());
+			// 	if (vm == null) { // vm was not created
+			// 		Log.printLine(CloudSim.clock() + ": " + getName() + ": Postponing execution of cloudlet "
+			// 				+ cloudlet.getCloudletId() + ": bount VM not available");
+			// 		continue;
+			// 	}
+			// }
+
+			Log.printLine(CloudSim.clock() + ": " + getName() + ": Sending cloudlet "
+					+ cloudlet.getCloudletId() + " to VM #" + vm.getId());
+			cloudlet.setVmId(vm.getId());
+			sendNow(getVmsToDatacentersMap().get(vm.getId()), CloudSimTags.CLOUDLET_SUBMIT, cloudlet);
+			cloudletsSubmitted++;
+			// vmIndex = (vmIndex + 1) % getVmsCreatedList().size();
+			getCloudletSubmittedList().add(cloudlet);
+		}
+
+		// remove submitted cloudlets from waiting list
+		for (Cloudlet cloudlet : getCloudletSubmittedList()) {
+			getCloudletList().remove(cloudlet);
+		}
 	}
 	
 	//Display the contents of the cost Matrix
@@ -543,10 +625,10 @@ public class DatacenterBroker extends SimEntity {
 		for(i=0;i<cloudletList.size();i++) {				//row is for cloudlet
 			for(j=0;j<vmList.size();j++) {		//column is for VM
 				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
-				System.out.print("cloudlet id: "+i+" cloudlet length: "+getCloudletList().get(i).getCloudletLength()+" VM id: "+j+" VM mips: "+vmList.get(j).getMips());
-				System.out.println("  costMatrix: "+costMatrix[i][j]);
+//				System.out.print("cloudlet id: "+i+" cloudlet length: "+getCloudletList().get(i).getCloudletLength()+" VM id: "+j+" VM mips: "+vmList.get(j).getMips());
+//				System.out.println("  costMatrix: "+costMatrix[i][j]);
 			}
-			System.out.println();
+//			System.out.println();
 		}
 		//display costMatrix values
 		System.out.println("Final matrix is: ");

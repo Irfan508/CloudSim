@@ -12,15 +12,17 @@
 
 package org.cloudbus.cloudsim.examples;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.CloudletSchedulerSpaceShared;
-import org.cloudbus.cloudsim.CloudletSchedulerTimeShared;
 import org.cloudbus.cloudsim.Datacenter;
 import org.cloudbus.cloudsim.DatacenterBroker;
 import org.cloudbus.cloudsim.DatacenterCharacteristics;
@@ -32,7 +34,6 @@ import org.cloudbus.cloudsim.UtilizationModel;
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.VmAllocationPolicySimple;
-import org.cloudbus.cloudsim.VmSchedulerSpaceShared;
 import org.cloudbus.cloudsim.VmSchedulerTimeShared;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
@@ -59,16 +60,38 @@ public class MyExample {
 		//VM Parameters
 		long size = 10000; //image size (MB)
 		int ram = 512; //vm memory (MB)
-		int mips = 250;
+		int mips = 100;				//250 for all my expts
 		long bw = 1000;
 		int pesNumber = 1; //number of cpus
 		String vmm = "Xen"; //VMM name
 
 		//create VMs
 		Vm[] vm = new Vm[vms];
-		int new_arr[]= {1,3,5,7,9,8,6,4,2,0};
+
+		//for hungarian algorithm
+    	Scanner scanner = null;
+		try {
+			scanner = new Scanner(new File("D://VMs.txt"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	int [] new_arr = new int [200];
+    	int j = 0;
+    	while(scanner.hasNextInt())
+    	{
+    	     new_arr[j] = scanner.nextInt();
+    	     new_arr[j]=new_arr[j]%vms;
+//    	     System.out.print(new_arr[j]+"\t");
+    	     j++;
+    	}
+    	scanner.close();
+
+
+//		int new_arr[]= {1,3,5,7,9,8,6,4,2,0};		//for all my experiments
 		for(int i=0;i<vms;i++){
-			vm[i] = new Vm(idShift + i, userId, mips+(new_arr[i%10]*5), pesNumber, ram, bw, size, vmm, new CloudletSchedulerSpaceShared());
+//			vm[i] = new Vm(idShift + i, userId, mips+(new_arr[i%10]*5), pesNumber, ram, bw, size, vmm, new CloudletSchedulerSpaceShared());
+			vm[i] = new Vm(idShift + i, userId, mips+(new_arr[i]*5), pesNumber, ram, bw, size, vmm, new CloudletSchedulerSpaceShared());
 			list.add(vm[i]);
 			System.out.println("VM id: "+vm[i].getId()+" mips "+vm[i].getCurrentRequestedTotalMips());
 		}
@@ -80,10 +103,31 @@ public class MyExample {
 	private static List<Cloudlet> createCloudlet(int userId, int cloudlets, int idShift){
 		// Creates a container to store Cloudlets
 		LinkedList<Cloudlet> list = new LinkedList<Cloudlet>();
-//	int arr[]= {1,3,6,8,0,2,7,9,4,5};
-	int arr[]= {21,8,0,25,4,18,10,14};
+
+		//for hungarian algorithm
+    	Scanner scanner = null;
+		try {
+			scanner = new Scanner(new File("D://CLoudlets.txt"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	int [] arr = new int [200];
+    	int j = 0;
+    	while(scanner.hasNextInt())
+    	{
+    	     arr[j] = scanner.nextInt();
+    	     arr[j]=arr[j]%cloudlets;
+ //   	     System.out.print(arr[j]+"\t");
+    	     j++;
+    	}
+    	scanner.close();
+
+		
+//		int arr[]= {1,3,6,8,0,2,7,9,4,5};		//for all my experiments
+//	int arr[]= {21,8,0,25,4,18,10,14};
 		//cloudlet parameters
-		long length = 40000;
+		long length = 10000;			//40000 for all my expts
 		long fileSize = 300;
 		long outputSize = 300;
 		int pesNumber = 1;
@@ -92,7 +136,9 @@ public class MyExample {
 		Cloudlet[] cloudlet = new Cloudlet[cloudlets];
 
 		for(int i=0;i<cloudlets;i++){
-			cloudlet[i] = new Cloudlet(idShift + i, length+(arr[i%8]*5000), pesNumber, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
+//			cloudlet[i] = new Cloudlet(idShift + i, length+(arr[i%8]*5000), pesNumber, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
+			cloudlet[i] = new Cloudlet(idShift + i, length+(arr[i]*1000), pesNumber, fileSize, outputSize, utilizationModel, utilizationModel, utilizationModel);
+
 			// setting the owner of these Cloudlets
 			cloudlet[i].setUserId(userId);
 			list.add(cloudlet[i]);
@@ -132,7 +178,7 @@ public class MyExample {
 
 			//Fourth step: Create VMs and Cloudlets and send them to broker
 			vmlist = createVM(brokerId, 10, 0); //creating 5 vms
-			cloudletList = createCloudlet(brokerId, 5000, 0); // creating 10 cloudlets
+			cloudletList = createCloudlet(brokerId, 10, 0); // creating 10 cloudlets
  
 			broker.submitVmList(vmlist);
 			broker.submitCloudletList(cloudletList);
@@ -168,7 +214,7 @@ public class MyExample {
 		//    a Machine.
 		List<Pe> peList1 = new ArrayList<Pe>();
 
-		int mips = 1000;
+		int mips = 20000;		//1000 for all my experiments
 
 		// 3. Create PEs and add these into the list.
 		//for a quad-core machine, a list of 4 PEs is required:
@@ -185,9 +231,9 @@ public class MyExample {
 
 		//4. Create Hosts with its id and list of PEs and add them to the list of machines
 		int hostId=0;
-		int ram = 5000; //host memory (MB) 16384
+		int ram = 100000; //host memory (MB) 16384		5000 for all my experiments
 		long storage = 1000000; //host storage
-		int bw = 10000;
+		int bw = 1000000;			//10000 for all my experiments
 
 		hostList.add(
     			new Host(
@@ -261,7 +307,17 @@ public class MyExample {
 
 		DatacenterBroker broker = null;
 		try {
-			broker = new DatacenterBroker(name);
+			//broker = new DatacenterBroker(name);
+			
+			//m is no of ants
+			//q is no of iterations
+			//rho is rate of evaporation
+			//alpha is rate of phermone deposition/importance of phermone
+			//beta is importance of dist bw cities
+			
+			
+			//broker=new DatacenterBroker(name, m, Q, alpha, beta, gamma, rho);
+			broker = new DatacenterBroker(name, 5, 7, 1, 5, 75, 0.5);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
