@@ -16,7 +16,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
+//import org.apache.commons.math3.stat.clustering.Cluster;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 import org.cloudbus.cloudsim.core.SimEntity;
@@ -24,7 +26,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.lists.CloudletList;
 import org.cloudbus.cloudsim.lists.VmList;
 
-import com.sun.corba.se.pept.broker.Broker;
+//import com.sun.corba.se.pept.broker.Broker;
 
 /**
  * DatacentreBroker represents a broker acting on behalf of a user. It hides VM management, as vm
@@ -388,12 +390,29 @@ public class DatacenterBroker extends SimEntity {
 	 */
 	protected void submitCloudlets() {		//cloudlets are mapped to the VMs in RR fashion
 //		submitCloudletsACO();
-		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
-		if(vmsCreatedList.size()==cloudletList.size()) {
-			System.out.println("***************No of cloudlets and vm are same.. SO running hungarian algorithm in submitCloudlets()");
-			submitCloudletsHungarianAlgo();		//it will bind the cloudlets with VMs using bindCloudlettoVm()
-		}
-			int vmIndex = 0;
+		
+//		System.out.println("No of VMs: "+vmsCreatedList.size()+" No of cloudlets: "+cloudletList.size());
+//		if(vmsCreatedList.size()==cloudletList.size()) {
+//			System.out.println("***************No of cloudlets and vm are same.. SO running hungarian algorithm in submitCloudlets()");
+//			submitCloudletsHungarianAlgo();		//it will bind the cloudlets with VMs using bindCloudlettoVm()
+//		}
+		
+//		submitCloudletsKhalidCluster();
+		
+//		submitCloudletsKhalidRandomCluster();
+		
+//		submitCloudletsKhalidRandom();
+
+//		submitCloudletsKhalidRL();
+	
+		submitCloudletsKhalidRandomRL();
+		
+//		System.out.println("*********************Inside our function******************************************************************");
+//		submitCloudletsMinMin();
+		
+//		submitCloudletsMaxMin();
+
+		int vmIndex = 0;
 			List<Cloudlet> successfullySubmitted = new ArrayList<Cloudlet>();
 			for (Cloudlet cloudlet : getCloudletList()) {
 				Vm vm;
@@ -428,7 +447,368 @@ public class DatacenterBroker extends SimEntity {
 			getCloudletList().removeAll(successfullySubmitted);			
 	}
 	
+	protected void submitCloudletsKhalidRandom() {
+		int i;
+		int noOfVMs=vmList.size();
+		Random rand=new Random();
+		
+		for(i=0;i<cloudletList.size();i++) {
+			bindCloudletToVm(cloudletList.get(i).getCloudletId(), rand.nextInt(noOfVMs));
+		}		
+		
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int clusterCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<cloudletList.size();i++) {
+				JobCount[cloudletList.get(i).getVmId()]++;
+				if(i==(cloudletList.size()-1))
+					continue;
+				else {
+					if(cloudletList.get(i).getVmId()!=cloudletList.get(i+1).getVmId()) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]+" and clusters on Fog Device "+ i +" = "+clusterCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);				
+		
+	}
+	
+	protected int findMinimum(double times[]) {
+		int i,index=-1;
+		double min=999999;
+		
+		for(i=0;i<vmList.size();i++) {
+			if(min>times[i]) {
+				min=times[i];
+				index=i;
+			}
+		}
+		return index;
+	}
+	
+	protected void submitCloudletsKhalidRL() {
+		double times[]=new double[vmList.size()];
+		times[0]=64.52;
+		times[1]=48.7;
+		times[2]=21.87;
+		times[3]=40.42;
+		times[4]=90.94;
+		int i,j,min;
+		
+		for(i=0;i<cloudletList.size();i++) {
+			min=findMinimum(times);
+			bindCloudletToVm(cloudletList.get(i).getCloudletId(), min);
+			times[min]+=cloudletList.get(i).getCloudletLength()/vmList.get(min).getMips();
+		}
+		
+		
+		
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int clusterCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<cloudletList.size();i++) {
+				JobCount[cloudletList.get(i).getVmId()]++;
+				if(i==(cloudletList.size()-1))
+					continue;
+				else {
+					if(cloudletList.get(i).getVmId()!=cloudletList.get(i+1).getVmId()) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]+" and clusters on Fog Device "+ i +" = "+clusterCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);	
+		
+
+	}
+	
+	protected void submitCloudletsKhalidRandomRL() {
+		Random rand=new Random();
+		int total=0;
+		int i=0,j=0;
+		int clusterSize[]=new int[200];
+		int noOfClusters=0;
+		long lengthOfCluster[]=new long[200];
+		int result[]=new int[200];
+		int clusterRange[]=new int[200];
+		
+		double times[]=new double[vmList.size()];
+		times[0]=64.52;
+		times[1]=48.7;
+		times[2]=21.87;
+		times[3]=40.42;
+		times[4]=90.94;
+		int min;
+		
+		
+		while(total!=5000) {
+			noOfClusters++;
+			int val=rand.nextInt(100);
+			val++;		//to avoid zero size cluster
+			System.out.println("random number generated = "+val+" and total = "+total);
+			if((total+val)<5000) {
+				total+=val;
+				clusterSize[i]=val;
+				
+			}
+			else {
+				clusterSize[i]=5000-total;
+				total=5000;
+			}
+			i++;
+		}
+		noOfClusters=i;
+		System.out.println("Number of clusters is: "+noOfClusters);
+		
+		int sum=0;
+		clusterRange[0]=0;
+		for(i=0;i<noOfClusters;i++) {
+			lengthOfCluster[i]=clusterSize[i]*10000;
+			sum=sum+clusterSize[i];
+			clusterRange[(i+1)]=sum;
+		}
+		
+		int JobCount[]=new int[vmList.size()];
+		int clusterCount[]=new int[vmList.size()];		
+		int exMin=0;
+		int ComCost=0;
+
+		for(i=0;i<noOfClusters;i++) {
+			min=findMinimum(times);
+
+			clusterCount[min]++;
+			for(j=clusterRange[i];j<clusterRange[i+1];j++) {
+				bindCloudletToVm(cloudletList.get(j).getCloudletId(), min);
+				times[min]+=cloudletList.get(j).getCloudletLength()/vmList.get(min).getMips();
+				JobCount[min]++;
+			}
+			if(i==0) {
+				exMin=min;
+			}
+			else {
+				if(exMin!=min)
+					ComCost++;
+			}
+			exMin=min;
+		}
+				
+	
+//		//for khalid program
+//		int JobCount[]=new int[vmList.size()];
+//		int clusterCount[]=new int[vmList.size()];
+//		int ComCost=0;
+//		for(i=0;i<noOfClusters;i++) {
+//				JobCount[result[i]]+=clusterSize[i];
+//				clusterCount[result[i]]++;
+//				if(i==(noOfClusters-1))
+//					continue;
+//				else {
+//					if(result[i]!=result[i+1]) {
+//						ComCost++;
+//					}
+//				}
+//		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]+" and clusters on Fog Device "+ i +" = "+clusterCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);		
+	} 
+	
+	protected void submitCloudletsKhalidRandomCluster() {
+		Random rand=new Random();
+		int total=0;
+		int i=0,j=0;
+		int clusterSize[]=new int[200];
+		int noOfClusters=0;
+		long lengthOfCluster[]=new long[200];
+		int result[]=new int[200];
+		int index, value;
+		int clusterRange[]=new int[200];
+		
+		
+		while(total!=5000) {
+			noOfClusters++;
+			int val=rand.nextInt(100);
+			val++;		//to avoid zero size cluster
+			System.out.println("random number generated = "+val+" and total = "+total);
+			if((total+val)<5000) {
+				total+=val;
+				clusterSize[i]=val;
+				
+			}
+			else {
+				clusterSize[i]=5000-total;
+				total=5000;
+			}
+			i++;
+		}
+		noOfClusters=i;
+		System.out.println("Number of clusters is: "+noOfClusters);
+		
+		int sum=0;
+		clusterRange[0]=0;
+		for(i=0;i<noOfClusters;i++) {
+			lengthOfCluster[i]=clusterSize[i]*10000;
+			sum=sum+clusterSize[i];
+			clusterRange[(i+1)]=sum;
+		}
+		
+		int row=noOfClusters;
+		int col=vmList.size();
+		double[][] costMatrix=new double[noOfClusters][vmsCreatedList.size()];
+		double[][] costMatrixTemp=new double[noOfClusters][vmsCreatedList.size()];
+		for(i=0;i<noOfClusters;i++) {		//row is for cloudlets
+			for(j=0;j<vmsCreatedList.size();j++) {	//column is for VMs
+				costMatrix[i][j]=(int) (lengthOfCluster[i]/vmList.get(j).getMips());
+				costMatrixTemp[i][j]=(int) (lengthOfCluster[i]/vmList.get(j).getMips());
+			}
+		}	
+		
+//		System.out.println("Cost matrix before implementation of the algo is:");
+//		displayCostMatrix(costMatrix);
+		
+		for(i=0;i<row;i++) {
+			value=(int) costMatrix[i][0];			//store first value
+			index=0;
+			for(j=0;j<col;j++) {
+				if(value>costMatrix[i][j]) {
+					value=(int) costMatrix[i][j];
+					index=j;
+				}	
+			}	//this loops finds the smallest value in each row and its corresponding index	
+			result[i]=index;
+			value=(int)costMatrixTemp[i][index];
+//			costMatrix[i][index]=9999;
+			for(int k=0;k<row;k++) {
+				if(k==i)
+					continue;
+				costMatrix[k][index]+=value;
+			}
+//			System.out.println("value of i: "+i);
+//			displayCostMatrix(costMatrix);
+		}
+		
+		System.out.println("Final resultant matrix is: ");
+		for(i=0;i<noOfClusters;i++) {
+			for(j=clusterRange[i];j<clusterRange[(i+1)];j++) {
+				bindCloudletToVm(cloudletList.get(j).getCloudletId(), result[i]);
+				System.out.println("Cloudlet "+cloudletList.get(j).getCloudletId()+" has been bound to VM "+result[i]);
+				//System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+			}			
+		}
+	
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int clusterCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<noOfClusters;i++) {
+				JobCount[result[i]]+=clusterSize[i];
+				clusterCount[result[i]]++;
+				if(i==(noOfClusters-1))
+					continue;
+				else {
+					if(result[i]!=result[i+1]) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]+" and clusters on Fog Device "+ i +" = "+clusterCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);				
+		
+	}
+	
+	protected void submitCloudletsKhalidCluster() {		//cloudlets are mapped to the VMs in RR fashion
+				
+		int totalCloudlets=getCloudletList().size();
+//		int totalDevices=getVmList().size();
+		int clusterSize=100;
+		int noOfClusters=totalCloudlets/clusterSize;
+		double lengthOfCluster=cloudletList.get(0).getCloudletLength()*clusterSize;
+		int i,j;
+		int index,value;
+		int result[]=new int[noOfClusters];
+		int row=noOfClusters;
+		int col=getVmList().size();
+		
+		double[][] costMatrix=new double[noOfClusters][vmsCreatedList.size()];
+		double[][] costMatrixTemp=new double[noOfClusters][vmsCreatedList.size()];
+		for(i=0;i<noOfClusters;i++) {		//row is for cloudlets
+			for(j=0;j<vmsCreatedList.size();j++) {	//column is for VMs
+				costMatrix[i][j]=(int) (lengthOfCluster/vmList.get(j).getMips());
+				costMatrixTemp[i][j]=(int) (lengthOfCluster/vmList.get(j).getMips());
+			}
+		}	
+		
+//		System.out.println("Cost matrix before implementation of the algo is:");
+//		displayCostMatrix(costMatrix);
+		
+		for(i=0;i<row;i++) {
+			value=(int) costMatrix[i][0];			//store first value
+			index=0;
+			for(j=0;j<col;j++) {
+				if(value>costMatrix[i][j]) {
+					value=(int) costMatrix[i][j];
+					index=j;
+				}	
+			}	//this loops finds the smallest value in each row and its corresponding index	
+			result[i]=index;
+			value=(int)costMatrixTemp[i][index];
+//			costMatrix[i][index]=9999;
+			for(int k=0;k<row;k++) {
+				if(k==i)
+					continue;
+				costMatrix[k][index]+=value;
+			}
+//			System.out.println("value of i: "+i);
+//			displayCostMatrix(costMatrix);
+		}
+		
+		System.out.println("Final resultant matrix is: ");
+		for(i=0;i<noOfClusters;i++) {
+			for(j=0;j<clusterSize;j++) {
+				bindCloudletToVm(cloudletList.get(i*clusterSize+j).getCloudletId(), result[i]);
+				System.out.println("Cloudlet "+cloudletList.get(i*clusterSize+j).getCloudletId()+" has been bound to VM "+result[i]);
+				//System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+			}			
+		}
+	
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<noOfClusters;i++) {
+				JobCount[result[i]]+=clusterSize;
+				if(i==(noOfClusters-1))
+					continue;
+				else {
+					if(result[i]!=result[i+1]) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);				
+	}
+	
+	
+	
 	//ACO funtion from github
+	//does not require the remaining portion of the original submitCloudlets()
 	protected void submitCloudletsACO() {
 		// int vmIndex = 0;
 		List<Cloudlet> clList = getCloudletList();
@@ -513,10 +893,10 @@ public class DatacenterBroker extends SimEntity {
 			}
 		});
 
-		System.out.print("\nCloudlets after sorting:\t");
-		for(i=0;i<cloudletList.size();i++)
-			System.out.print(cloudletList.get(i).getCloudletId()+"\t");
-		System.out.println();
+//		System.out.print("\nCloudlets after sorting:\t");
+//		for(i=0;i<cloudletList.size();i++)
+//			System.out.print(cloudletList.get(i).getCloudletId()+"\t");
+//		System.out.println();
 
 		double[][] costMatrix=new double[cloudletList.size()][vmsCreatedList.size()];
 		double[][] costMatrixTemp=new double[cloudletList.size()][vmsCreatedList.size()];
@@ -526,8 +906,9 @@ public class DatacenterBroker extends SimEntity {
 				costMatrixTemp[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
 			}
 		}	
-		System.out.println("Cost matrix before implementation of the algo is:");
-		displayCostMatrix(costMatrix);
+		
+//		System.out.println("Cost matrix before implementation of the algo is:");
+//		displayCostMatrix(costMatrix);
 		
 		for(i=0;i<row;i++) {
 			value=(int) costMatrix[i][0];			//store first value
@@ -556,6 +937,26 @@ public class DatacenterBroker extends SimEntity {
 			System.out.println("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
 			//System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
 		}
+
+		
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<cloudletList.size();i++) {
+				JobCount[result[i]]++;
+				if(i==(cloudletList.size()-1))
+					continue;
+				else {
+					if(result[i]!=result[i+1]) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);
 	}
 	
 	
@@ -616,41 +1017,41 @@ public class DatacenterBroker extends SimEntity {
 		}
 	}
 	
-	protected void submitCloudletsHungarianAlgo() {		//use vmsCreatedList.size()	instead of vmList.size()
-		int i,j;
-		double cost=0;
-		/** Cost matrix for hungarian algo*/
-		double[][] costMatrix=new double[cloudletList.size()][cloudletList.size()];
-		System.out.println("***********************Cost matrix is:");
-		for(i=0;i<cloudletList.size();i++) {				//row is for cloudlet
-			for(j=0;j<vmList.size();j++) {		//column is for VM
-				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
-//				System.out.print("cloudlet id: "+i+" cloudlet length: "+getCloudletList().get(i).getCloudletLength()+" VM id: "+j+" VM mips: "+vmList.get(j).getMips());
-//				System.out.println("  costMatrix: "+costMatrix[i][j]);
-			}
+//	protected void submitCloudletsHungarianAlgo() {		//use vmsCreatedList.size()	instead of vmList.size()
+//		int i,j;
+//		double cost=0;
+//		/** Cost matrix for hungarian algo*/
+//		double[][] costMatrix=new double[cloudletList.size()][cloudletList.size()];
+//		System.out.println("***********************Cost matrix is:");
+//		for(i=0;i<cloudletList.size();i++) {				//row is for cloudlet
+//			for(j=0;j<vmList.size();j++) {		//column is for VM
+//				costMatrix[i][j]=(int) (cloudletList.get(i).getCloudletLength()/vmList.get(j).getMips());
+////				System.out.print("cloudlet id: "+i+" cloudlet length: "+getCloudletList().get(i).getCloudletLength()+" VM id: "+j+" VM mips: "+vmList.get(j).getMips());
+////				System.out.println("  costMatrix: "+costMatrix[i][j]);
+//			}
+////			System.out.println();
+//		}
+//		//display costMatrix values
+//		System.out.println("Final matrix is: ");
+//		for(i=0;i<cloudletList.size();i++) {
+//			for(j=0;j<vmList.size();j++) {
+//				System.out.print(costMatrix[i][j]+"\t");			
+//			}
 //			System.out.println();
-		}
-		//display costMatrix values
-		System.out.println("Final matrix is: ");
-		for(i=0;i<cloudletList.size();i++) {
-			for(j=0;j<vmList.size();j++) {
-				System.out.print(costMatrix[i][j]+"\t");			
-			}
-			System.out.println();
-		}
-		HungarianAlgorithm algo=new HungarianAlgorithm(costMatrix);
-		int result[]=algo.execute();		//returns VM no for each cloudlet
-		System.out.println("Resultant matrix is: ");
-		for(i=0;i<vmList.size();i++) {
-			bindCloudletToVm(cloudletList.get(i).getCloudletId(), result[i]);
-			System.out.print("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
-			System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
-			cost=cost+costMatrix[i][result[i]];
-		}
-		System.out.println("\nTotal cost is: "+cost);
-		
-	}
-	
+//		}
+//		HungarianAlgorithm algo=new HungarianAlgorithm(costMatrix);
+//		int result[]=algo.execute();		//returns VM no for each cloudlet
+//		System.out.println("Resultant matrix is: ");
+//		for(i=0;i<vmList.size();i++) {
+//			bindCloudletToVm(cloudletList.get(i).getCloudletId(), result[i]);
+//			System.out.print("Cloudlet "+cloudletList.get(i).getCloudletId()+" has been bound to VM "+result[i]);
+//			System.out.println("  "+result[i]+"("+costMatrix[i][result[i]]+")\t");
+//			cost=cost+costMatrix[i][result[i]];
+//		}
+//		System.out.println("\nTotal cost is: "+cost);
+//		
+//	}
+//	
 
 	//rank based function where the cloudlets are sorted first and then mapped sequentially
 	//larger cloudlets assume higher priority

@@ -177,8 +177,8 @@ public class MyExample {
 			int brokerId = broker.getId();
 
 			//Fourth step: Create VMs and Cloudlets and send them to broker
-			vmlist = createVM(brokerId, 10, 0); //creating 5 vms
-			cloudletList = createCloudlet(brokerId, 10, 0); // creating 10 cloudlets
+			vmlist = createVM(brokerId, 200, 0); //creating 5 vms
+			cloudletList = createCloudlet(brokerId, 200, 0); // creating 10 cloudlets
  
 			broker.submitVmList(vmlist);
 			broker.submitCloudletList(cloudletList);
@@ -317,7 +317,7 @@ public class MyExample {
 			
 			
 			//broker=new DatacenterBroker(name, m, Q, alpha, beta, gamma, rho);
-			broker = new DatacenterBroker(name, 5, 7, 1, 5, 75, 0.5);
+			broker = new DatacenterBroker(name, 10, 5, 5, 1, 75, 0.5);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
