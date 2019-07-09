@@ -405,7 +405,13 @@ public class DatacenterBroker extends SimEntity {
 
 //		submitCloudletsKhalidRL();
 	
-		submitCloudletsKhalidRandomRL();
+//		submitCloudletsKhalidRandomRL();
+		
+//		submitCloudletsKhalidFCFS();
+		
+//		submitCloudletsKhalidFCFSRandomCluster();
+		
+		submitCloudletsSaturation(4);
 		
 //		System.out.println("*********************Inside our function******************************************************************");
 //		submitCloudletsMinMin();
@@ -445,6 +451,137 @@ public class DatacenterBroker extends SimEntity {
 
 			// remove submitted cloudlets from waiting list
 			getCloudletList().removeAll(successfullySubmitted);			
+	}
+	
+	protected void submitCloudletsSaturation(int vmId) {
+		int i;
+		Random rand=new Random();
+		
+		for(i=0;i<1000;i++) {		//bind first 1000 cloudlets with vmId and rest in random fashion
+			bindCloudletToVm(cloudletList.get(i).getCloudletId(), vmId);
+		}
+		for(i=1000;i<cloudletList.size();i++) {
+			bindCloudletToVm(cloudletList.get(i).getCloudletId(), rand.nextInt(vmList.size()));
+		}
+		
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<cloudletList.size();i++) {
+				JobCount[cloudletList.get(i).getVmId()]++;
+				if(i==(cloudletList.size()-1))
+					continue;
+				else {
+					if(cloudletList.get(i).getVmId()!=cloudletList.get(i+1).getVmId()) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);	
+	}
+	
+	protected void submitCloudletsKhalidFCFS() {
+		int i,j;
+		int limit=cloudletList.size()/vmList.size();		//number of cloudlets on each VM		
+		
+		for(i=0;i<vmList.size();i++) {
+			for(j=0;j<limit;j++) {
+				bindCloudletToVm(cloudletList.get((i*limit)+j).getCloudletId(), i);
+			}
+		}		
+		
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int clusterCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<cloudletList.size();i++) {
+				JobCount[cloudletList.get(i).getVmId()]++;
+				if(i==(cloudletList.size()-1))
+					continue;
+				else {
+					if(cloudletList.get(i).getVmId()!=cloudletList.get(i+1).getVmId()) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]+" and clusters on Fog Device "+ i +" = "+clusterCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);	
+	}
+	
+	protected void submitCloudletsKhalidFCFSRandomCluster() {
+		Random rand=new Random();
+		int total=0;
+		int i=0,j=0;
+		int clusterSize[]=new int[200];
+		int noOfClusters=0;
+		long lengthOfCluster[]=new long[200];
+		int result[]=new int[200];
+		int index, value;
+		int clusterRange[]=new int[200];
+		
+		
+		while(total!=5000) {
+			noOfClusters++;
+			int val=rand.nextInt(100);
+			val++;		//to avoid zero size cluster
+			System.out.println("random number generated = "+val+" and total = "+total);
+			if((total+val)<5000) {
+				total+=val;
+				clusterSize[i]=val;
+			}
+			else {
+				clusterSize[i]=5000-total;
+				total=5000;
+			}
+			i++;
+		}
+		noOfClusters=i;
+		System.out.println("Number of clusters is: "+noOfClusters);
+		
+		int sum=0;
+		clusterRange[0]=0;
+		for(i=0;i<noOfClusters;i++) {
+			lengthOfCluster[i]=clusterSize[i]*10000;
+			sum=sum+clusterSize[i];
+			clusterRange[(i+1)]=sum;
+		}
+		
+		int clusterCount[]=new int[vmList.size()];
+		int vmId=0;
+		for(i=0;i<noOfClusters;i++) {
+			for(j=clusterRange[i];j<clusterRange[i+1];j++) {
+				bindCloudletToVm(cloudletList.get(j).getCloudletId(), vmId);
+			}
+			clusterCount[vmId]++;
+			vmId=(vmId+1)%vmList.size();
+		}		
+	
+		//for khalid program
+		int JobCount[]=new int[vmList.size()];
+		int ComCost=0;
+		for(i=0;i<cloudletList.size();i++) {
+				JobCount[cloudletList.get(i).getVmId()]++;
+				if(i==(cloudletList.size()-1))
+					continue;
+				else {
+					if(cloudletList.get(i).getVmId()!=cloudletList.get(i+1).getVmId()) {
+						ComCost++;
+					}
+				}
+		}
+		System.out.println("Count of Jobs on each machine");
+		for(i=0;i<JobCount.length;i++) {
+			System.out.println("Jobs on Fog Device "+i+" = "+JobCount[i]+" and clusters on Fog Device "+ i +" = "+clusterCount[i]);
+		}
+		System.out.println("Cost of communication is: "+ComCost);					
+		
 	}
 	
 	protected void submitCloudletsKhalidRandom() {
